@@ -1,5 +1,5 @@
 
-diffuse <- function( parameter_list, pop_data, n_seed = 5, n_years = 5, 
+diffuse <- function( parameter_list, pop_data, n_seed = 5, n_years = 1, 
   neighbor_radius = 500, census_period = 30, quiet = TRUE, 
   cognition = "additive" ){
 
@@ -16,6 +16,8 @@ diffuse <- function( parameter_list, pop_data, n_seed = 5, n_years = 5,
   if(any(is.na(preg$male))) stop("preg male has missing values")
 
   # initialize diffusion trait
+
+  if(!"age" %in% colnames(preg)) stop("there is no age variable")
 
   preg$phi <- 0
   can <- which( is.na(preg$dod) & preg$male==1 
