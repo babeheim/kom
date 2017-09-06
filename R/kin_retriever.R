@@ -7,6 +7,8 @@ kin_retriever <- function(pid, pop_reg){
     pop_reg$f_pid <- as.character(pop_reg$f_pid)
     pop_reg$m_pid <- as.character(pop_reg$m_pid)
 
+    if(!"ff_pid" %in% colnames(pop_reg)) stop("missing grandparent columns")
+
     pop_reg$ff_pid <- as.character(pop_reg$ff_pid)
     pop_reg$fm_pid <- as.character(pop_reg$fm_pid)
     pop_reg$mf_pid <- as.character(pop_reg$mf_pid)

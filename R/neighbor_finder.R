@@ -1,12 +1,16 @@
 
 
 
-neighbor_finder <- function(pid, pop_reg, house_reg, dist_radius=50){
+neighbor_finder <- function(pid, pop_reg, house_reg, dist_radius=50, units="m"){
 
     # for each pid, query their immediate neighbor network, 
     # not including other men in their own house
 
     # house_reg: household, village, x_coord, y_coord
+
+    if(!units %in% c("m","km")) stop("units must be 'm' or 'km'")
+
+    if( units=="m" & dist_radius < 10 | units=="km" & dist_radius < 1/100 ) warning("this search radius is quite short, less than ten meters!")
 
     pid <- as.character(pid)
     pop_reg$pid <- as.character(pop_reg$pid)
@@ -32,6 +36,9 @@ neighbor_finder <- function(pid, pop_reg, house_reg, dist_radius=50){
     village_house_rows <- which( house_reg$village==my_village )
     village_house_distances <- sqrt( (my_house_x_coord - house_reg$x_coord[village_house_rows])^2 
         + (my_house_y_coord - house_reg$y_coord[village_house_rows])^2 )
+
+    if( sum( village_house_distances < dist_radius ) == length(village_house_distances) ) warning("all houses in this village within the distance specified")
+
     nearby_house_rows <- village_house_rows[which( village_house_distances < dist_radius )]
     nearby_houses <- house_reg$household[nearby_house_rows]
     nearby_houses <- setdiff( nearby_houses, my_household )

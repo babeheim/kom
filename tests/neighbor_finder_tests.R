@@ -55,32 +55,20 @@ if(length(drop) > 0){
 # my_pid <- NA
 # neighbor_finder(my_pid, preg, hreg, dist_radius=5000)
 
+test_that("bad pid not accepted", {
+  my_pid <- 1
+  expect_error(neighbor_finder(my_pid, preg, hreg, dist_radius=5000))
+})
 
-# print("tests for kin_retriever")
+test_that("warning if search radius too close", {
+  my_pid <- 1508
+  expect_warning(neighbor_finder(my_pid, preg, hreg, dist_radius=1))
+})
 
-# # kin
-# test <- "kin"
-# x <- replicate(n, {
-#   my_pid <- sample(preg$pid, 1)
-#   out <- kin_retriever(my_pid, preg)
-#   all(length(out)>=0)
-# })
-# if(all(x)) { print(paste0("pass: ", test)) 
-#   } else print(paste0("fail: ", test))
-
-
-# test_that("kin", {
-  
-#   x <- replicate(n, {
-#     my_pid <- sample(preg$pid, 1)
-#     out <- kin_retriever(my_pid, preg)
-#     all(length(out)>=0)
-#   })
-#   expect_true(all(x))
-#   expect_equal(str_length("ab"), 2)
-#   expect_equal(str_length("abc"), 3)
-# })
-
+test_that("warning if search radius too close", {
+  my_pid <- 1508
+  expect_warning(neighbor_finder(my_pid, preg, hreg, units="km", dist_radius=0.001))
+})
 
 test_that("random NA's in pop_reg$household", {
   x <- replicate(n, {

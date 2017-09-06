@@ -17,7 +17,6 @@ preg$mf_pid <- preg$f_pid[match(preg$m_pid, preg$pid)]
 preg$fm_pid <- preg$m_pid[match(preg$f_pid, preg$pid)]
 preg$ff_pid <- preg$f_pid[match(preg$f_pid, preg$pid)]
 
-
 test_that( "all return valid values", {
   n <- nrow(preg)
   x <- NA
@@ -28,7 +27,7 @@ test_that( "all return valid values", {
 })
 
 
-test_that( "add a person with no relatives", {
+test_that( "a person with no relatives returns character zero", {
   new <- preg[1,]
   new[!is.na(new)] <- NA
   new$pid <- "ABCD"
