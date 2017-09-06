@@ -6,6 +6,7 @@ kin_retriever <- function(pid, pop_reg){
     pop_reg$pid <- as.character(pop_reg$pid)
     pop_reg$f_pid <- as.character(pop_reg$f_pid)
     pop_reg$m_pid <- as.character(pop_reg$m_pid)
+
     pop_reg$ff_pid <- as.character(pop_reg$ff_pid)
     pop_reg$fm_pid <- as.character(pop_reg$fm_pid)
     pop_reg$mf_pid <- as.character(pop_reg$mf_pid)
@@ -16,16 +17,37 @@ kin_retriever <- function(pid, pop_reg){
 
     my_dad <- pop_reg$f_pid[which(pop_reg$pid==pid)]
     my_mom <- pop_reg$m_pid[which(pop_reg$pid==pid)]
-    my_sons <- pop_reg$pid[which(pop_reg$f_pid==pid)]
-    my_mates <- sort(unique(pop_reg$m_pid[which(pop_reg$f_pid==pid)]))
+
+    is_male <- pop_reg$male[which(pop_reg$pid==pid)]
+
+    if(is_male){
+        my_sons <- pop_reg$pid[which(pop_reg$f_pid==pid & pop_reg$male==1)]
+        my_daughters <- pop_reg$pid[which(pop_reg$f_pid==pid & pop_reg$male==0)]
+    } else {
+        my_sons <- pop_reg$pid[which(pop_reg$m_pid==pid & pop_reg$male==1)]
+        my_daughters <- pop_reg$pid[which(pop_reg$m_pid==pid & pop_reg$male==0)]
+    }
+
+    if(is_male){
+        my_mates <- sort(unique(pop_reg$m_pid[which(pop_reg$f_pid==pid)]))
+    } else {
+        my_mates <- sort(unique(pop_reg$f_pid[which(pop_reg$m_pid==pid)]))
+    }
+
     my_mates_dads <- sort(unique(pop_reg$f_pid[which(pop_reg$pid %in% my_mates)]))
     my_mates_bros <- which(pop_reg$f_pid %in% my_mates_dads & pop_reg$male==1)
+
     my_sibs <- pop_reg$pid[which((pop_reg$f_pid==my_dad | pop_reg$m_pid==my_mom) & 
         pop_reg$pid!=pid)]
+
     my_nephews <- pop_reg$pid[which(pop_reg$male==1 & (pop_reg$f_pid %in% my_sibs | 
         pop_reg$m_pid %in% my_sibs))]
+    my_neices <- pop_reg$pid[which(pop_reg$male==0 & (pop_reg$f_pid %in% my_sibs | 
+        pop_reg$m_pid %in% my_sibs))]
+
     my_grandparents <- sort(unique(c(pop_reg$ff_pid[which(pop_reg$pid==pid)], pop_reg$fm_pid[which(pop_reg$pid==pid)], 
         pop_reg$mf_pid[which(pop_reg$pid==pid)], pop_reg$mm_pid[which(pop_reg$pid==pid)])))
+
     my_uncles <- integer(0)
     my_aunts <- integer(0)
     my_cousins <- integer(0)
@@ -39,8 +61,8 @@ kin_retriever <- function(pid, pop_reg){
         my_cousins <- pop_reg$pid[which((pop_reg$f_pid %in% my_uncles | 
             pop_reg$m_pid %in% my_aunts) & pop_reg$pid!=pid)]
     }
-    output <- na.omit(c(my_dad, my_mom, my_sons, my_mates, 
-        my_mates_dads, my_mates_bros, my_sibs, my_nephews, 
+    output <- na.omit(c(my_dad, my_mom, my_sons, my_daughters, my_mates, 
+        my_mates_dads, my_mates_bros, my_sibs, my_nephews, my_neices, 
         my_grandparents, my_uncles, my_aunts, my_cousins))
     output <- as.numeric(output)
     return(output)
