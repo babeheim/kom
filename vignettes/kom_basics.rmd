@@ -1,0 +1,226 @@
+---
+title: Basics of the KOM package
+date: 2017-08-26
+author: Bret Beheim
+---
+
+The KOM toolset was created for studying diffusion data in discrete census counts. KOM stands for "knowledge, opportunity, motivation" which encompasses the major articulation of a diffusion process in our model. It is also catchy.
+
+Note that this analysis is limited to certain kinds of diffusion processes, ignoring those through demographic change or migration, for example.
+
+Generally concerned with three types of data:
+- properties of individuals, that is, their current locations, age, sex, occupation, time allocation profile, health status, etc. Of course, it also is concerned with the diffusing phenotype.
+- properties of households and communities
+- properties of networks of individuals, connected by spatial proximity, kinship, affiliational measures, etc.
+
+Diffusions occur because of many different reasons. If we want to map those out and establish a general framework, which was the purpose of the KOM package.
+
+
+
+# Simulated diffusions
+
+To benchmark our analysis step, we can generate simulated diffusions within a population of agents by the `diffuse` function. This function can either initialize its own random population when called or, if you wish, it can simulate the diffusion through an existing population, e.g. a projection on a real dataset. In either case the population must be of the `simani` class, a list containing three tables:
+
+- `preg`, the population register
+- `vreg`, the village register
+- `hreg`, the household register
+
+These are *state* tables, so they record the state at any given moment in the simulation, rather than record the history. This must be done by another part of the simulator. So, for example, each ego is keeping a running total of the number of alters who have a particular trait.
+
+As an example, let's initialize our own population , using the `simani` package. The starting parameters are
+
+```{r, eval=FALSE}
+
+init_list <- list(
+  n_individuals = 10,
+  n_communities = 1
+  avg_ties_within_communities = 4
+)
+
+pop <- snoobsimulate(init_list)
+
+```
+
+This initializes a population database with this information, which we can then run a simulation through. You should confirm that it has the appropriate categories. 
+
+We also have to specify our hypothesis for how the diffusion is actually working, including the cognition of the agents, in the form of probability-of-adoption model.
+
+Having specified these parameters in yaml:
+
+```
+  n_seed_individuals: 5
+  seed_network_location: random 
+  simulation_duration_years: 15
+  pequi_radius: 500
+  baseline_probability: 1e-05
+  kin_network_effect: 5
+  town_distance_effect: 0
+  neighbor_effect: -3
+  wealth_effect: 2
+  observation_rate: 365
+  event_logging: TRUE
+
+```
+
+The last two key/value pairs, `observation_rate` and `event_logging` are how we interact with the simulator output. We imagine a simulated anthropologist visits on those days and saves a snapshot of the state tables to memory. This could be done daily! 
+
+```{r, eval=FALSE}
+
+census_records <- diffuse(init_list, cog_model, pop)
+
+```
+
+If everything is set up properly, the simulator will load all initital conditions in, and run a loop, one day of the simulation. All state variables will be recalculated within the three registers, and agents will stochastically acquire the traits under the cognitive models we specified.
+
+We can confirm this with a script 
+
+```{r, eval=FALSE}
+
+phi_means <- tapply(census_records$year, census_records$phi, mean)
+
+plot(phi_means)
+
+```
+
+Here I go through a few different simlated diffusions to illustrate what is possible. We can modify (1) the demographic structure of the population, (2) the diffusion cognition of the agents, and (3) sampling rate of the observers.
+
+## Example 1: A very large simulation
+
+In the above, we have only 10 people. With more people, we get cleaner resolution.
+
+```{r, eval=FALSE}
+
+init_list <- list(
+  n_individuals = 1000,
+  n_communities = 10,
+  avg_ties_within_communities = 4,
+  avg_ties_between_communities = 1
+)
+
+pop <- snoobsimulate(init_list)
+
+cog_model <- # map2stan reader! 
+
+census_records <- diffuse(init_list, cog_model, pop)
+
+```
+
+## Example 2: Knowledge-limited diffusions
+
+Here we modify the experiment using a different cognitive model; people have to know about the trait first, and they do that through social proximity with holders of the trait.
+
+
+
+## Example 3: Resource-limited diffusions
+
+Here we introduce wealth inequality, and make that wealth variable essential to acquiring the diffusing trait.
+
+
+
+## A real diffusion dataset: pequis
+
+Here I have data from a real dataset, the diffusion of gasoline motors among riverine horticulturalists in Amazonia. R package `pequis` loads with `kom-diffison`.
+
+```{r, eval=FALSE}
+
+  data(pequis)
+
+```
+
+Here we have a data frame that resembles the output of the  diffusion simulator above, sampled yearly. Whether or not someone acquired a pequi, as well as things we've learned about those people.
+
+
+```{r, eval=FALSE}
+
+# plot of the diffusion of pequis over time
+
+```
+
+A full treatment of this diffusion can be found [here](github.com/babeheim/pequi-diffusion).
+
+
+# Diffusion Analysis
+
+Dataset in hand, we now come to the point of all this, trying to establish a bit more about the nature of the diffusion process given the information available.
+
+To do this, we want to create a *risk table* that encompasses every 'trial' for which individuals either did or did not adopt the trait under study. We exclude, then, individuals who were never at risk of adoption, or have already adopted, focusing only on those 'at risk' at each census.
+
+For each of those individuals, the adoption models can take the form of a binomial risk model, given what information is available at that time. Our models are written in STAN code, but can be summarized elegantly by Richard McElreath's map2stan syntax:
+
+```{r}
+
+m_multi <- alist(
+    pequi ~ dbinom(1,p),
+    log(p) <- log(knowledge) + log(opportunity) + log(motivation),
+    logit(knowledge) <- a_know + b_K * kin_has,
+    logit(opportunity) <- a_oppo + b_W * wealth,
+    logit(motivation) <- a_moti + b_N * neighbor_has,
+    c(a_moti, a_oppo) ~ dnorm(0,10),
+    a_know ~ dnorm(-4,0.5),  # a prior, we expect the baseline for knowledge to be low
+    c(b_K, b_W, b_N) ~ dnorm(0, 1)
+)
+
+```
+
+```{r}
+
+m_add <- alist(
+    pequi ~ dbinom(1,p),
+    logit(p) <- a + 
+      b_K * kin_has + 
+      b_W * wealth + 
+      b_N * neighbor_has,
+    a ~ dnorm(0,10),
+    c(b_K, b_W, b_N) ~ dnorm(0, 1)
+)
+
+```
+
+We create the wrapper `diffusion_fit` that accepts the census records, and automatically calculates the risk matrix, then fits the models.
+
+```{r, eval=FALSE}
+
+fit <- diffusion_fit( diffusion_history, stats_model )
+
+```
+
+The `diffusion_history` object can be fed into this, with the statistical model to use. We can analyze the fitted model object in the usual fashion.
+
+# A complete example
+
+Let's combine everything above into one diffusion analysis, to demonstrate.
+
+
+```{r, eval=FALSE}
+
+# make the population 
+
+init_list <- list(
+  n_individuals = 10,
+  n_communities = 1
+  avg_ties_within_communities = 4
+)
+
+pop <- snoobsimulate(init_list)
+
+# simulate the diffusion
+
+m_add <- alist(
+    pequi ~ dbinom(1,p),
+    logit(p) <- a + 
+      b_K * kin_has + 
+      b_W * wealth + 
+      b_N * neighbor_has,
+    a ~ dnorm(0,10),
+    c(b_K, b_W, b_N) ~ dnorm(0, 1)
+)
+
+records <- diffuse(init_list, cog_model, pop)
+
+# analysis
+
+fit <- diffusion_fit( records, model=m_add )
+
+
+```
+

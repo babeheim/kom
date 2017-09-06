@@ -1,0 +1,158 @@
+---
+title: Signal injection experiments using KOM
+date: 2017-08-26
+author: Bret Beheim
+---
+
+The scientific question that motivated KOM's development was,  under what conditions can one effectively detect and identify distinct diffusion processes at works? In [our previous vignette](./kom_basics.html) we laid out how a diffusion analysis might proceed, ending with a statistical model of the process that partially resembles the generating diffusion model. When we simulate data with known parameters, we `inject` a signal into that dataset which our analysis methods then recover (or not). This kind of signal injection exercise is the highest form of validation analysis.
+
+To explore this, we stress-tested the package by simulating millions of diffusions under different conditions and aggregating the results of our analysis.
+
+
+# Signal detection criteria
+
+We decided to use Gelman's Type S error, the probability that an estimated coefficient has the wrong sign. A threshold of 11% would mean, for example, that the probability of incorrectly detecting the direction of the effect. This does not directly estimate the probability of mis-estimating the magnitude of the effect, though, and it is undefined if the effect is exactly 0.
+
+
+```{r}
+
+init <- list(
+    simulation_duration_years = 15,
+    pequi_radius = 500,
+    baseline_probability = 1e-05,
+    kin_network_effect = parameter_set$kin_network_effect[z],
+    town_distance_effect = 0,
+    neighbor_effect = parameter_set$neighbor_effect[z],
+    wealth_effect = parameter_set$wealth_effect[z]
+)
+
+diffusion_history <- diffuse( init, sim_population )
+my_fit <- fit_diffusion( init, diffusion_history, model )
+results <- evaluate_signal( init , my_fit )
+
+```
+
+The result is a JSON object summarizing our findings.
+
+
+# Varying signal strengths
+
+We systematically vary and parallel simulate using the `mclapply` function in the `parallel` package. The code makes up the `run_parallel` script.
+
+```{r, eval=FALSE}
+
+parameter_set <- expand.grid(
+    neighbor_effect=seq(-7, 7, by=1),
+    kin_network_effect=seq(-7, 7, by=1),
+    wealth_effect=seq(-7, 7, by=1)
+)
+
+sim_population <- simanize()
+
+# initialize simulations
+result1 <- mclapply( 
+    1:nrow(parameter_set),
+    function(z){
+
+        init <- list(
+            simulation_duration_years = 15,
+            pequi_radius = 500,
+            baseline_probability = 1e-05,
+            kin_network_effect = parameter_set$kin_network_effect[z],
+            town_distance_effect = 0,
+            neighbor_effect = parameter_set$neighbor_effect[z],
+            wealth_effect = parameter_set$wealth_effect[z]
+        )
+
+        diffusion_history <- diffuse( init, sim_population )
+        my_fit <- fit_diffusion( init, diffusion_history, model )
+        results <- evaluate_signal( init , my_fit )
+
+    },
+    mc.cores = 50
+)
+
+# graph of a parameter with type S error highlighted
+
+```
+
+
+# Varying the strength of different processes
+
+The simplest way to do this is to systematically vary the initilization parameters over some range and re-simulate the diffusion.
+
+The `run_parallel.r` script is written to do this on a parallel computing core. Current technology allows about 1000 completed simulation plus analysis cycles per hour on a cluster of 64 cores.
+
+```{r}
+
+# graph different type S errors at differnet points on the scale for some parameter set.
+
+```
+
+
+
+
+
+
+# Varying the statistical model form
+
+We also varied the statistical model, from additive to multiplicative.
+
+
+```{r}
+
+m_multi <- alist(
+    pequi ~ dbinom(1,p),
+    log(p) <- log(knowledge) + log(opportunity) + log(motivation),
+    logit(knowledge) <- a_know + b_K * kin_has,
+    logit(opportunity) <- a_oppo + b_W * wealth,
+    logit(motivation) <- a_moti + b_N * neighbor_has,
+    c(a_moti, a_oppo) ~ dnorm(0,10),
+    a_know ~ dnorm(-4,0.5),  # a prior, we expect the baseline for knowledge to be low
+    c(b_K, b_W, b_N) ~ dnorm(0, 1)
+)
+
+```
+
+```{r}
+
+m_add <- alist(
+    pequi ~ dbinom(1,p),
+    logit(p) <- a + 
+      b_K * kin_has + 
+      b_W * wealth + 
+      b_N * neighbor_has,
+    a ~ dnorm(0,10),
+    c(b_K, b_W, b_N) ~ dnorm(0, 1)
+)
+
+```
+
+Fitting these models against the real data.
+
+```{r}
+
+# graph different type S errors at differnet points on the scale for some parameter set, for both multiplicative and additive
+
+```
+
+
+# Varying the network structure
+
+Let's change the structure of the network! 
+
+
+
+
+# Knocking certain variables out of the statistical model
+
+Finally, we telescope the input dataset, removing some variables. The premise here is that we roll back our knowledge, and we want to study how that affects our inference.
+
+Do we lose the inferential power above, without those vairables, than if we include them?
+
+
+```{r}
+
+# graph different type S errors at differnet points on the scale for some parameter set, for both multiplicative and additive, having knocked out certain predictor variables
+
+```

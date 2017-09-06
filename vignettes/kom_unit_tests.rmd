@@ -1,0 +1,44 @@
+---
+title: Unit tests for KOM functions
+date: 2017-08-26
+author: Bret Beheim
+---
+
+There's a lot of complicating operations in KOM, so it is important to unit test every function, constantly, trying out scenarios well beyond the ones you initially developed them for.
+
+The two important functions are `neighbor_finder` and `kin_retriever`, which are used to detect alters who are relationally connected by spatial location or by kinship.
+
+We can illustrate how these work by first simulating a population.
+
+```{r, eval=FALSE}
+
+pop <- simanize()
+
+```
+
+I'll sample one individual at `target_pid`. We pass this ID 
+
+```{r, eval=FALSE}
+
+neighbor_finder( target_pid, data = pop)
+
+```
+
+The output is all the people who live nearby. We can expand this search area by the `dist_radius` argument, which is in meters.
+
+Likewise with `kin_retriever`, 
+
+```{r, eval=FALSE}
+
+kin_retriever( target_pid, data = pop)
+
+```
+
+This information is useful because, for example, now we can look up those people and see if they have the diffusing trait.
+
+In the ./tests folder, you will find a series of unit tests for these functions, that pass a variety of different inputs and check that the results are right.
+
+Of course these tests are just for me! They aren't included in the downloadable version of the package.
+
+Finally there's the function `pequi_get` which is how diffusing traits are generated. This of course needs to be renamed to trait_get or soemthing...
+
