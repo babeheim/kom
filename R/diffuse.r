@@ -5,7 +5,7 @@ diffuse <- function( parameter_list, pop_data, n_seed = 5, n_years = 1,
 
   preg <- pop_data$people
   hreg <- pop_data$households
-  vreg <- pop_data$villages
+  vreg <- pop_data$villages # not used for now
 
   preg$ff_pid <- 
 
@@ -51,7 +51,6 @@ diffuse <- function( parameter_list, pop_data, n_seed = 5, n_years = 1,
         
         risk <- preg[can,]
 
-        risk$log_dist_town <- vreg$log_dist_town[risk$village]
         risk$kin_has <- 0
         risk$neighbor_has <- 0
 

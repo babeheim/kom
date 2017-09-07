@@ -26,9 +26,6 @@ popdata$people$age <- 0 - popdata$people$dob
 popdata$people$wealth <- rnorm(nrow(popdata$people), 0, 10) 
 # distribution can be varied
 
-popdata$villages$dist_town <- 1000*popdata$villages$dist_town
-popdata$villages$log_dist_town <- log(popdata$villages$dist_town)
-
 popdata$households$ray_coord <- haversine(popdata$households$lat, 
   popdata$villages$lat[match(popdata$households$village, popdata$villages$village)], 
   popdata$households$long, popdata$villages$long[match(popdata$households$village, popdata$villages$village)])
@@ -45,7 +42,6 @@ popdata$households$y_coord <- cartesian_map(popdata$households$lat,
 parameter_list <- list(
   baseline_probability = 1e-05,
   kin_network_effect = 0,
-  town_distance_effect = 0,
   neighbor_effect = 0,
   wealth_effect = 0
 )
@@ -112,25 +108,6 @@ test_that("not a valid cognitive model", {
 })
 
 
-# inputs: 
-## pid - character, 
-## pop_reg$household - character
-## pop_reg$village - character
-## pop_reg$pid - character
-## house_reg$household - character
-## house_reg$village - character
-
-## dist_radius - numeric, > -0
-
-## house_reg$x_coord - numeric 
-## house_reg$y_coord - numeric
-
-## fail if any are not above, convert to character
-# also fail if trying to pass in NA values
-
-## pass it a variety of locations on the globe...
-## no! dont use haversine, just make it cartesian inputs
-
 
 test_that( "neighbor_has works", {
 
@@ -164,7 +141,6 @@ test_that( "neighbor_has works", {
   parameter_list <- list(
     baseline_probability = 1e-05,
     kin_network_effect = 3,
-    town_distance_effect = 0,
     neighbor_effect = 3,
     wealth_effect = 0
   )
@@ -180,3 +156,43 @@ test_that( "neighbor_has works", {
 
 
 
+
+test_that( "this works", {
+
+  library(kom)
+
+  data(hortVillage)
+
+  hortVillage$people$mm_pid <- hortVillage$people$m_pid[match(hortVillage$people$m_pid, hortVillage$people$pid)]
+  hortVillage$people$mf_pid <- hortVillage$people$f_pid[match(hortVillage$people$m_pid, hortVillage$people$pid)]
+  hortVillage$people$fm_pid <- hortVillage$people$m_pid[match(hortVillage$people$f_pid, hortVillage$people$pid)]
+  hortVillage$people$ff_pid <- hortVillage$people$f_pid[match(hortVillage$people$f_pid, hortVillage$people$pid)]
+
+  hortVillage$people$male[is.na(hortVillage$people$male)] <- 1
+  hortVillage$people$age <- 0 - hortVillage$people$dob
+
+  hortVillage$people$wealth <- rnorm(nrow(hortVillage$people), 0, 10) 
+  # distribution can be varied
+
+  hortVillage$households$ray_coord <- haversine(hortVillage$households$lat, 
+    hortVillage$villages$lat[match(hortVillage$households$village, hortVillage$villages$village)], 
+    hortVillage$households$long, hortVillage$villages$long[match(hortVillage$households$village, hortVillage$villages$village)])
+  hortVillage$households$x_coord <- cartesian_map(hortVillage$households$lat, 
+    hortVillage$villages$lat[match(hortVillage$households$village, hortVillage$villages$village)], 
+    hortVillage$households$long, hortVillage$villages$long[match(hortVillage$households$village, hortVillage$villages$village)])$x
+  hortVillage$households$y_coord <- cartesian_map(hortVillage$households$lat, 
+    hortVillage$villages$lat[match(hortVillage$households$village, hortVillage$villages$village)], 
+    hortVillage$households$long, hortVillage$villages$long[match(hortVillage$households$village, hortVillage$villages$village)])$y
+
+  parameter_list <- list(
+    baseline_probability = 1e-05,
+    kin_network_effect = 0,
+    neighbor_effect = 0,
+    wealth_effect = 5
+  )
+
+  history <- diffuse( parameter_list, hortVillage, cognition="additive" )
+
+  expect_true( nrow(history) > 0 )
+
+})

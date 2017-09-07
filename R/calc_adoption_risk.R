@@ -9,7 +9,6 @@ calc_adoption_risk <- function( parameter_list, risk_table, cognition ){
 
     baseline <- parameter_list$baseline_probability # (0,1)
     b_kin <- parameter_list$kin_network_effect
-    b_dist <- parameter_list$town_distance_effect
     b_neighbor <- parameter_list$neighbor_effect
     b_wealth <- parameter_list$wealth_effect
 
@@ -17,7 +16,6 @@ calc_adoption_risk <- function( parameter_list, risk_table, cognition ){
 
     logit_pr_adopt <- alpha + 
       b_kin * risk_table$kin_has + 
-      b_dist * risk_table$log_dist_town + 
       b_neighbor * risk_table$neighbor_has + 
       b_wealth * risk_table$wealth
 
@@ -30,7 +28,6 @@ calc_adoption_risk <- function( parameter_list, risk_table, cognition ){
   if( cognition == "multiplicative" ){
 
     b_kin <- parameter_list$kin_network_effect
-    b_dist <- parameter_list$town_distance_effect
     b_neighbor <- parameter_list$neighbor_effect
     b_wealth <- parameter_list$wealth_effect
 
@@ -46,7 +43,7 @@ calc_adoption_risk <- function( parameter_list, risk_table, cognition ){
     motivation_alpha <- log( motivation_baseline / 
      (1 - motivation_baseline) )
 
-    logit_knowledge <- knowledge_alpha + b_kin * risk_table$kin_has + b_dist * risk_table$log_dist_town
+    logit_knowledge <- knowledge_alpha + b_kin * risk_table$kin_has
     logit_opportunity <- opportunity_alpha + b_wealth * risk_table$wealth
     logit_motivation <- motivation_alpha + b_neighbor * risk_table$neighbor_has
 
