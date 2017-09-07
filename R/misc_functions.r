@@ -1,5 +1,5 @@
 
-cartesian_map <- function(lat1, lat2, long1, long2, units="km"){
+cartesian_map <- function(lat1, lat2, long1, long2, units="m"){
 
     x <- haversine(lat1, lat1, long1, long2, units=units)
     tar <- which(long1 < long2)

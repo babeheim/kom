@@ -5,7 +5,7 @@ diffuse <- function( parameter_list, pop_data, n_seed = 5, n_years = 1,
 
   preg <- pop_data$people
   hreg <- pop_data$households
-  vreg <- pop_data$villages # not used for now
+  vreg <- pop_data$villages # not used, for now
 
   preg$ff_pid <- 
 

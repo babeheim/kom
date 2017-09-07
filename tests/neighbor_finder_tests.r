@@ -55,19 +55,13 @@ if(length(drop) > 0){
 # my_pid <- NA
 # neighbor_finder(my_pid, preg, hreg, dist_radius=5000)
 
+
+
+
+
 test_that("bad pid not accepted", {
   my_pid <- 1
   expect_error(neighbor_finder(my_pid, preg, hreg, dist_radius=5000))
-})
-
-test_that("warning if search radius too close", {
-  my_pid <- 1508
-  expect_warning(neighbor_finder(my_pid, preg, hreg, dist_radius=1))
-})
-
-test_that("warning if search radius too close", {
-  my_pid <- 1508
-  expect_warning(neighbor_finder(my_pid, preg, hreg, units="km", dist_radius=0.001))
 })
 
 test_that("random NA's in pop_reg$household", {
@@ -176,7 +170,49 @@ test_that( "too-short distance returns character(0)" , {
   expect_true( all(x) )
 })
 
-test_that( "wide radius is all but focal household" , {
+test_that("warning if search radius too close", {
+  my_pid <- 1508
+  expect_warning(neighbor_finder(my_pid, preg, hreg, dist_radius=1))
+})
+
+test_that("warning if search radius too close", {
+  my_pid <- 1508
+  expect_warning(neighbor_finder(my_pid, preg, hreg, units="km", dist_radius=0.001))
+})
+
+# hreg$x_coord and hreg$y_coord are in meters
+# so, if we specify km for the neighbor_finder, need to times by 1000
+
+test_that("same results if I change the units from m to km", {
+
+  x <- replicate(n, {
+    my_dist <- sample(1:5000, 1)
+    my_pid <- sample(preg$pid, 1)
+    in_km <- neighbor_finder(my_pid, preg, hreg, units="km", dist_radius=my_dist/1000)
+    in_m <- neighbor_finder(my_pid, preg, hreg, units="m", dist_radius=my_dist)
+    identical_set(in_km, in_m)
+    # expect_equal(in_km, in_m)
+  })
+
+  expect_true( all(x) )
+
+})
+
+test_that("no warning for 2 km", {
+  for(i in 1:nrow(preg)){
+    my_pid <- preg$pid[i]
+    expect_silent(neighbor_finder(my_pid, preg, hreg, units="km", dist_radius=2))
+  }
+})
+
+test_that("no warning for 2000m", {
+  for(i in 1:nrow(preg)){
+    my_pid <- preg$pid[i]
+    expect_silent(neighbor_finder(my_pid, preg, hreg, units="m", dist_radius=2000))
+  }
+})
+
+test_that( "overly wide radius is all but focal household" , {
   x <- replicate(n,{
     my_pid <- sample(preg$pid, 1)
     my_household <- preg$household[preg$pid==my_pid]
@@ -187,6 +223,28 @@ test_that( "wide radius is all but focal household" , {
     identical_set( c(my_household_residents,test), all_residents ) 
   }) 
   expect_true( all(x) )
+})
+
+
+test_that( "overly wide radius gives warning" , {
+  x <- replicate(n,{
+    my_pid <- sample(preg$pid, 1)
+    my_household <- preg$household[preg$pid==my_pid]
+    my_household_residents <- preg$pid[preg$household==my_household]
+    my_village <- preg$village[preg$pid==my_pid]
+    all_residents <- preg$pid[preg$village==my_village]
+    expect_warning(neighbor_finder(my_pid, preg, hreg, dist_radius=100000))
+  }) 
+})
+
+test_that( "n_neighbors is increasing with distance", {
+  for(i in 1:n){
+    test_dist <- seq(1, 5000, by=100)
+    n_neighbors <- rep(NA, length(test_dist))
+    my_pid <- sample(preg$pid, 1)
+    for(i in 1:length(test_dist)) n_neighbors[i] <- length(neighbor_finder(my_pid, preg, hreg, dist_radius=test_dist[i]))
+    expect_true( all(diff(n_neighbors) >= 0) )
+  }
 })
 
 test_that( "random pid random distance", {
