@@ -12,7 +12,6 @@ library(kom)
 
 data(hortVillage)
 
-
 popdata <- hortVillage
 
 popdata$people$mm_pid <- popdata$people$m_pid[match(popdata$people$m_pid, popdata$people$pid)]
@@ -36,9 +35,6 @@ popdata$households$y_coord <- cartesian_map(popdata$households$lat,
   popdata$villages$lat[match(popdata$households$village, popdata$villages$village)], 
   popdata$households$long, popdata$villages$long[match(popdata$households$village, popdata$villages$village)])$y
 
-
-
-
 parameter_list <- list(
   baseline_probability = 1e-05,
   kin_network_effect = 0,
@@ -50,7 +46,7 @@ parameter_list <- list(
 
 # normal sim
 test_that("normal diffusion simulation", {
-  x <- diffuse( parameter_list, popdata, quiet=FALSE )
+  x <- diffuse( parameter_list, popdata )
   expect_true(nrow(x) > 0)
 })
 
@@ -60,12 +56,12 @@ test_that("just one day, with yearly obs rate", {
 })
 
 test_that( "just one day!", {
-  x <- diffuse( parameter_list, popdata, census_period=1, n_years=1/365, cognition="additive" , quiet=TRUE )
+  x <- diffuse( parameter_list, popdata, census_period=1, n_years=1/365, cognition="additive" )
   expect_equal( length(unique(x$date)), 1 )
 })
 
 test_that( "daily censuses for 100 days", {
-  history <- diffuse( parameter_list, census_period=1, n_year=100/365, popdata, cognition="additive" , quiet=TRUE )
+  history <- diffuse( parameter_list, census_period=1, n_year=100/365, popdata, cognition="additive" )
   expect_equal( length(unique(history$date)), 100 )
 })
 

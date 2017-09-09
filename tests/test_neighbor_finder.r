@@ -250,22 +250,10 @@ test_that( "n_neighbors is increasing with distance", {
 test_that( "random pid random distance", {
   x <- replicate(n, {
     my_pid <- sample(preg$pid, 1)
-    my_radius <- rexp(1 ,1/3000 )
+    my_radius <- rexp(1 , 1/3000 )
     output <- neighbor_finder(my_pid, preg, hreg, dist_radius=my_radius)
     length(output)>=0
   })
-  expect_true( all(x) )
-})
-
-test_that( "there is no one else in the village", {
-  x <- replicate(n,{
-    my_pid <- sample(preg$pid, 1)
-    my_village <- preg$village[preg$pid==my_pid]
-    all_residents <- preg$pid[preg$village==my_village & preg$pid!=my_pid]
-    preg1 <- preg[-which(preg$pid %in% all_residents),]
-    output <- neighbor_finder(my_pid, preg1, hreg, dist_radius=100000)
-    length(output)==0
-  }) 
   expect_true( all(x) )
 })
 
@@ -277,8 +265,6 @@ test_that( "everyone in the village lives in the same household", {
     all_residents <- preg$pid[preg$village==my_village & preg$pid!=my_pid]
     preg1 <- preg
     preg1$household[which(preg1$pid %in% all_residents)] <- my_household
-    output <- neighbor_finder(my_pid, preg1, hreg, dist_radius=100000)
-    length(output)==0
+    expect_warning(neighbor_finder(my_pid, preg1, hreg, dist_radius=10000))
   })
-  expect_true( all(x) )
 })
