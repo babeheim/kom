@@ -1,6 +1,6 @@
 
 diffuse <- function( parameter_list, pop_data, n_seed = 5, n_years = 1, 
-  neighbor_radius = 500, census_period = 30, quiet = TRUE, 
+  neighbor_radius = 500, census_period = 10, quiet = TRUE, 
   cognition = "additive" ){
 
   preg <- pop_data$people
@@ -70,13 +70,12 @@ diffuse <- function( parameter_list, pop_data, n_seed = 5, n_years = 1,
 
         }
 
-        risk$pr_adopt <- calc_adoption_risk( parameter_list = parameter_list, risk, cognition=cognition)
+        risk$pr_adopt <- calc_adoption_risk( parameter_list = 
+          parameter_list, risk, cognition=cognition)
 
         preg$pr_adopt[can] <- risk$pr_adopt
 
         # determine phi acquisitions
-
-        # i should save the pr_adopt as well! 
 
         risk$got_phi <- rbinom( nrow(risk) , 1, risk$pr_adopt )
         new_phi_owners <- risk$pid[which(risk$got_phi==1)]
@@ -89,19 +88,6 @@ diffuse <- function( parameter_list, pop_data, n_seed = 5, n_years = 1,
 
     # here's where we model the observer behavior, or at least part of it
     if(day == 1 | day %% census_period == 0){
-
-      # the fact i want to use this implies that it should be a sub-function
-      # hreg$has_phi <- NA
-      # for(i in 1:nrow(hreg)) hreg$has_phi[i] <- any(preg$phi[which(preg$household == hreg$household[i])]==1)
-
-      # can <- which( is.na(preg$dod) & preg$male==1 & preg$age >= 16*365)
-      # hreg$at_risk <- as.numeric(hreg$household %in% preg$household[can])
-      # plot(hreg$x_coord, hreg$y_coord, col=NULL)
-      # points(hreg$x_coord[hreg$at_risk==0], hreg$y_coord[hreg$at_risk==0], pch=20, col="gray")
-      # draw_circle(hreg$x_coord[hreg$at_risk==1], hreg$y_coord[hreg$at_risk==1], 
-      #     radius=phi_radius, col=col_alpha("gray", 0.4), border=NA)
-      # points(hreg$x_coord[hreg$at_risk==1], hreg$y_coord[hreg$at_risk==1], 
-      #     col=ifelse(hreg$has_phi[hreg$at_risk==1]==1, "red", "black"), pch=20)
 
       cens <- preg[,c('pid', 'male', 'dob', 'age', 'dod', 'm_pid', 'f_pid', 
          'household', 'village', 'wealth', 'phi', 'pr_adopt')]

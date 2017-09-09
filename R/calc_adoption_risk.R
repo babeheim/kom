@@ -1,13 +1,15 @@
 
 calc_adoption_risk <- function( parameter_list, risk_table, cognition ){
 
+  # need to make this more flexible
+
   if( !cognition %in% c("additive", "multiplicative") ) stop("not a valid cognitive model")
 
   logistic <- function(x) exp(x) / (1 + exp(x))
 
   if( cognition == "additive" ){
 
-    baseline <- parameter_list$baseline_probability # (0,1)
+    baseline <- parameter_list$baseline_probability
     b_kin <- parameter_list$kin_network_effect
     b_neighbor <- parameter_list$neighbor_effect
     b_wealth <- parameter_list$wealth_effect
@@ -23,18 +25,15 @@ calc_adoption_risk <- function( parameter_list, risk_table, cognition ){
 
   }
 
-  # # multiplicative model
-
   if( cognition == "multiplicative" ){
 
     b_kin <- parameter_list$kin_network_effect
     b_neighbor <- parameter_list$neighbor_effect
     b_wealth <- parameter_list$wealth_effect
 
-    # why is this hardwired?
-    knowledge_baseline <- 0.001
-    opportunity_baseline <- 0.001
-    motivation_baseline <- 0.99
+    knowledge_baseline <- parameter_list$knowledge_baseline
+    opportunity_baseline <- parameter_list$opportunity_baseline
+    motivation_baseline <- parameter_list$motivation_baseline
 
     knowledge_alpha <- log( knowledge_baseline / 
      (1 - knowledge_baseline) )
